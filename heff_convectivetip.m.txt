@@ -1,0 +1,90 @@
+T_rod = [157.7 147.8 133.5 126.7 124.3];  
+T_surf = [60 56 54 50 48];                
+T_inf = 31.3;                             
+
+x = [0 3.5 6.6 8.2 10.1] / 100;   
+L = 0.12;                        
+
+do = 0.015;      % rod outer diameter (m)
+di = 0.014;      % inner diameter (m)
+d_ins = 0.042;   % insulation outer diameter (m)
+Ac = (pi/4)*(do^2 - di^2); 
+P  = pi*do;  
+
+k = 350;        % rod conductivity
+k_ins = 0.077;   % insulation conductivity(calculated before
+
+% Fin fitting (convective tip)
+theta = T_rod - T_inf;
+theta0 = theta(1);
+
+model = @(m,x) theta0 .*(cosh(m*(L - x)) + (m*Ac/P).*sinh(m*(L - x))) ./ ...
+    (cosh(m*L) + (m*Ac/P).*sinh(m*L));
+
+m0 = 20;   % initial guess
+m_fit = lsqcurvefit(model, m0, x, theta);
+
+% effective heat transfer coefficient
+h_eff = (m_fit^2 * k * Ac) / P;
+
+fprintf('m = %.4f\n', m_fit);
+fprintf('h_eff = %.2f W/m^2-K\n', h_eff);
+for i=1:5
+Q(i)=h_eff*P*0.02*(T_rod(i)-T_inf);
+end
+%display(sum(Q))
+ fprintf("Outer heat loss(Convection+radiation) = %.2f W/m^2-K\n",sum(Q));
+
+A_surf = P * L;
+
+% total resistance from fin model
+R_eff = 1 / (h_eff * A_surf);
+
+% insulation resistance
+R_ins = log(d_ins/do) / (2*pi*k_ins*L);
+
+% air side resistance
+R_air = R_eff - R_ins;
+h_air = 1 / (R_air * A_surf);
+
+
+
+x_fit = linspace(0, L, 100);
+T_fit = model(m_fit, x_fit) + T_inf;
+p=polyfit(x,T_rod,1);
+p1=polyval(p,x);
+plot(x,p1);
+hold on;
+plot(x, T_rod, 'o'); hold on;
+plot(x_fit, T_fit, '-');
+xlabel('x (m)');
+ylabel('Temperature (°C)');
+title('Rod temperature distribution');
+legend('Linear fit','Data','Fin  Fit');
+grid on;
+
+B = m_fit * Ac / P;
+
+q_fin = k * Ac * m_fit * theta0 * (sinh(m_fit*L) + B*cosh(m_fit*L)) / ...
+    (cosh(m_fit*L) + B*sinh(m_fit*L));
+
+fprintf('Heat transfer (conduction) = %.3f W\n', q_fin);
+
+% Radiation loss (approx)
+Ts = mean(T_surf);
+TsK = Ts + 273;
+TinfK = T_inf + 273;
+
+sigma = 5.67e-8;
+epsilon = 0.85;
+
+q_rad = sigma * epsilon * A_surf * (TsK^4 - TinfK^4);
+h_rad = q_rad / (A_surf * (Ts - T_inf));
+
+fprintf('h_outsurface(Convection+radiation) = %.2f W/m^2-K\n', h_air);
+fprintf('h_rad = %.2f W/m^2-K\n', h_rad);
+
+% convection part only
+h_conv = h_air - h_rad;
+
+fprintf('h_conv (air only) = %.2f W/m^2-K\n', h_conv);

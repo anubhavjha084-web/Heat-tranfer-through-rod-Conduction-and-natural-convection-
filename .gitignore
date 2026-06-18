@@ -1,0 +1,71 @@
+# =========================
+# MATLAB / Octave
+# =========================
+
+# Compiled MEX binaries
+*.mex*
+
+# Packaged app and target files
+*.mlappinstall
+*.mltbx
+
+# Simulink autosave files
+*.slxc
+*.autosave
+
+# MATLAB code generation
+codegen/
+
+# MATLAB session files
+*.asv
+
+# MATLAB preferences / project settings
+*.m~
+*.mat
+*.fig
+
+# Simulink generated files
+slprj/
+
+# =========================
+# OS Generated Files
+# =========================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# =========================
+# Miscellaneous
+# =========================
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Build outputs
+build/
+out/

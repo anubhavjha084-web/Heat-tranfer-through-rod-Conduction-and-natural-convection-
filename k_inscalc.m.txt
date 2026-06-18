@@ -1,0 +1,81 @@
+clc; clear; close all;
+
+% DATA
+T_rod = [152.7 147.8 133.5 126.7 124.3];
+T_surf = [60 56 54 52 48];
+T_inf = 31.3;
+
+x = [0 3.5 6.6 8.2 10.1]/100;
+
+d = 0.042;     % insulation diameter
+do = 0.015;
+P = pi*d;
+L = 0.12;
+
+% air properties 
+k_air = 0.026;
+mue = 15.89e-6;% kinematic viscosity
+Pr = 0.71;
+beta = 1/330;
+g = 10;
+
+% STEP 1: LOCAL h (Churchill-Chu) we could not find relation of local h for
+% horizontalcylinder so we estimate Q=h_avg*A*(T_s-T_inf)
+%h_local = zeros(size(T_surf));
+
+for i = 1:length(T_surf)
+
+     Ts = T_surf(i);
+    % Tf = (Ts + T_inf)/2 + 273;
+    % 
+    deltaT = Ts - T_inf;
+
+    Gr = g * beta * deltaT * d^3 / (mue^2);
+    Ra = Gr * Pr;
+
+    % Churchill-Chu for horizontal cylinder
+    Nu = (0.60 + (0.487 * Ra^(1/6)) /( (1 + (0.559/Pr)^(9/16))^(8/27) ))^2;
+    h_avg = Nu * k_air / d;
+
+end
+% Total heat calculation
+Q_conv = h_avg*P*L*(mean(T_surf)-T_inf);
+
+q_conv_seg = zeros(1,length(x)-1);
+
+% for i = 1:length(x)-1
+% 
+%     dx = x(i+1) - x(i);
+% 
+%     T_avg = (T_surf(i) + T_surf(i+1))/2;
+%     h_avg = (h_local(i) + h_local(i+1))/2;
+% 
+%     q_conv_seg(i) = h_avg * P * (T_avg - T_inf) * dx;
+% 
+% end
+% q_conv_seg(5)=h_avg * P * (T_avg - T_inf) * 0.016;
+
+A = P*L;
+
+Ts_avg = mean(T_surf);
+TsK = Ts_avg + 273;
+TinfK = T_inf + 273;
+% Radiation properties(As radiation is comparable to convective effects we
+% have to consider it as well
+sigma = 5.67e-8;
+epsilon = 0.85;
+Q_rad = sigma * epsilon * A * (TsK^4 - TinfK^4);
+
+Q_total = Q_conv +Q_rad;
+
+fprintf('Q_conv = %.3f W\n', Q_conv);
+fprintf('Q_rad  = %.3f W\n', Q_rad);
+fprintf('Q_total = %.3f W\n', Q_total);
+
+% k_insulation calculation
+
+Trod_avg = mean(T_rod);
+Tsurf_avg = mean(T_surf);
+
+k_ins = (Q_total) * log(d/do) / (2*pi*L*(Trod_avg - Tsurf_avg));
+fprintf('k_insulation = %.4f W/m-K\n', k_ins);
